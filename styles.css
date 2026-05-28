@@ -150,11 +150,13 @@ figcaption {
 }
 
 .button {
+  align-items: center;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--accent);
   display: inline-flex;
+  gap: 0.45rem;
   font-weight: 800;
   padding: 0.72rem 1.15rem;
 }
@@ -162,6 +164,17 @@ figcaption {
 .button.primary {
   background: var(--accent);
   color: #ffffff;
+}
+
+.button svg {
+  fill: currentColor;
+  height: 1rem;
+  width: 1rem;
+}
+
+.button.disabled {
+  cursor: default;
+  opacity: 0.72;
 }
 
 .section {
@@ -211,9 +224,50 @@ pre,
 
 .figure-grid {
   display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4rem;
+  grid-template-columns: 1fr;
   margin-top: 1.8rem;
+}
+
+.result-card {
+  align-items: center;
+  background: rgba(255, 254, 250, 0.78);
+  border: 1px solid var(--line);
+  border-radius: 1.15rem;
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  padding: 1rem;
+}
+
+.result-card.reverse {
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+}
+
+.result-card.reverse .result-text {
+  order: 2;
+}
+
+.result-card.reverse .paper-figure {
+  order: 1;
+}
+
+.result-card.wide {
+  align-items: start;
+  grid-template-columns: 1fr;
+}
+
+.result-text {
+  padding: 0.5rem 0.65rem;
+}
+
+.result-kicker {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  margin-bottom: 0.55rem;
+  text-transform: uppercase;
 }
 
 .paper-figure {
@@ -318,9 +372,16 @@ pre code {
 
   .two-column,
   .contribution-grid,
+  .result-card,
+  .result-card.reverse,
   .figure-grid,
   .resource-list {
     grid-template-columns: 1fr;
+  }
+
+  .result-card.reverse .result-text,
+  .result-card.reverse .paper-figure {
+    order: initial;
   }
 
   .hero {

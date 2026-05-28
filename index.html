@@ -34,9 +34,18 @@
           Beihang University · Beijing Institute for General Artificial Intelligence
         </p>
         <div class="actions">
-          <a class="button primary" href="https://github.com/Hihiczx/Xetrieval">Code</a>
-          <a class="button" href="#paper">Paper</a>
-          <a class="button" href="#citation">Citation</a>
+          <a class="button primary" href="https://github.com/Hihiczx/Xetrieval">
+            <svg aria-hidden="true" viewBox="0 0 16 16">
+              <path d="M8 0.3a8 8 0 0 0-2.5 15.6c0.4 0.1 0.5-0.2 0.5-0.4v-1.5c-2.1 0.5-2.5-0.9-2.5-0.9-0.3-0.8-0.8-1-0.8-1-0.7-0.5 0-0.5 0-0.5 0.8 0.1 1.2 0.8 1.2 0.8 0.7 1.2 1.9 0.9 2.3 0.7 0.1-0.5 0.3-0.9 0.5-1.1-1.7-0.2-3.4-0.8-3.4-3.7 0-0.8 0.3-1.5 0.8-2-0.1-0.2-0.3-1 0.1-2 0 0 0.7-0.2 2.2 0.8A7.5 7.5 0 0 1 8 4.8c0.7 0 1.4 0.1 2 0.3 1.5-1 2.2-0.8 2.2-0.8 0.4 1 0.2 1.8 0.1 2 0.5 0.6 0.8 1.2 0.8 2 0 2.9-1.8 3.5-3.4 3.7 0.3 0.2 0.5 0.7 0.5 1.4v2.1c0 0.2 0.1 0.5 0.5 0.4A8 8 0 0 0 8 0.3Z" />
+            </svg>
+            Code
+          </a>
+          <a class="button disabled" href="" onclick="return false;" aria-disabled="true">
+            <svg aria-hidden="true" viewBox="0 0 16 16">
+              <path d="M3 1.5h7.2L13 4.3v10.2H3v-13Zm6.5 1.3V5h2.2L9.5 2.8ZM4.2 2.7v10.6h7.6V6.2H8.3V2.7H4.2Zm1.3 5h5v1.1h-5V7.7Zm0 2.2h5v1.1h-5V9.9Z" />
+            </svg>
+            Paper
+          </a>
         </div>
       </section>
     </header>
@@ -63,17 +72,30 @@
         </div>
         <div class="prose">
           <p>
-            Dense retrievers assign relevance scores through opaque
-            high-dimensional embeddings, making it difficult to diagnose why a
-            particular document is retrieved for a given query.
+            Explaining why dense retrievers assign high relevance scores remains
+            challenging because retrieval decisions are made through opaque
+            high-dimensional embeddings. Existing explanations often focus on
+            surface signals, such as lexical matches, token alignments, or
+            post-hoc textual rationales, and thus provide limited insight into
+            the latent factors that shape dense retrieval behavior at the
+            embedding level.
           </p>
           <p>
-            Xetrieval is an embedding-level mechanistic framework for explaining
-            dense retrieval. It approximates Chain-of-Thought reasoning directly
-            in embedding space, decomposes reasoning-enhanced embeddings into
-            sparse human-interpretable features, and attributes individual
-            retrieval decisions to shared active features between the query and
-            document-side views.
+            We propose <em>Xetrieval</em>, an embedding-level mechanistic
+            framework for explaining dense retrieval. Xetrieval first introduces
+            a lightweight reasoning internalizer that approximates
+            Chain-of-Thought reasoning directly in the embedding space with a
+            single forward pass, enriching sentence embeddings with
+            reasoning-oriented information while avoiding expensive
+            autoregressive generation. It then decomposes these
+            reasoning-enhanced embeddings into sparse, human-interpretable
+            features, each associated with a coherent natural language
+            description. By aggregating sparse feature overlaps across multiple
+            document-side views, Xetrieval provides feature-level explanations
+            of individual retrieval decisions. Experiments on diverse retrievers
+            and benchmarks show that Xetrieval uncovers coherent interpretable
+            features, yields stronger pair-level intervention effects, and
+            supports task-level feature steering.
           </p>
         </div>
       </section>
@@ -104,79 +126,143 @@
 
       <section class="section" id="results">
         <p class="section-label">Experiments</p>
-        <h2>Key results from the paper</h2>
+        <h2>Reasoning-aware features explain and steer retrieval</h2>
         <p class="section-intro">
-          The figures below are copied from PDF figures that are actually used by
-          the LaTeX manuscript.
+          Xetrieval is evaluated across retrieval benchmarks and interpretability
+          settings to test whether its sparse features are coherent, efficient to
+          obtain, and interventionally tied to retrieval behavior. The figures
+          below are converted only from PDF figures that are actually used in the
+          LaTeX manuscript.
         </p>
 
         <div class="figure-grid">
-          <figure class="paper-figure wide">
-            <img
-              src="./assets/figures/sae_evaluation.png"
-              alt="SAE comparison across sparsity levels"
-            >
-            <figcaption>
-              <strong>SAE evaluation.</strong> Comparison across sparsity levels
-              measured by reconstruction error, mono-semanticity, and retrieval
-              retention.
-            </figcaption>
-          </figure>
+          <article class="result-card">
+            <div class="result-text">
+              <p class="result-kicker">Reasoning Benefits Explainability</p>
+              <h3>Internalized reasoning makes embeddings easier to decompose.</h3>
+              <p>
+                The reasoning internalizer preserves retrieval-relevant signals
+                in embedding space while avoiding explicit CoT generation. When
+                passed to the mechanistic explainer, reasoned embeddings show
+                lower reconstruction error and activate richer sparse feature
+                sets, suggesting a more structured representation space for
+                feature-level analysis.
+              </p>
+            </div>
+            <figure class="paper-figure">
+              <img
+                src="./assets/figures/reasoning_comparison.png"
+                alt="Raw and reasoned embedding comparison"
+              >
+              <figcaption>
+                Reconstruction error and active feature count for raw and
+                reasoned embeddings.
+              </figcaption>
+            </figure>
+          </article>
 
-          <figure class="paper-figure">
-            <img
-              src="./assets/figures/reasoning_comparison.png"
-              alt="Raw and reasoned embedding comparison"
-            >
-            <figcaption>
-              <strong>Reasoning internalizer.</strong> Reconstruction error and
-              active feature count for raw and reasoned embeddings.
-            </figcaption>
-          </figure>
+          <article class="result-card reverse">
+            <div class="result-text">
+              <p class="result-kicker">Interpretable Sparse Features</p>
+              <h3>The discovered features are more semantically coherent.</h3>
+              <p>
+                Xetrieval equips sparse features with natural-language
+                hypotheses by summarizing top-activating samples, then evaluates
+                coherence with a detection score. The reasoning-aware
+                mechanistic explainer substantially outperforms Raw SAE and
+                Random SAE baselines, indicating that reasoning-enhanced
+                embeddings yield more distinguishable, human-interpretable
+                factors.
+              </p>
+            </div>
+            <figure class="paper-figure">
+              <img
+                src="./assets/figures/detection_kde.png"
+                alt="Detection score distributions"
+              >
+              <figcaption>
+                Detection score distributions of Raw SAE, Random SAE, and the
+                mechanistic explainer.
+              </figcaption>
+            </figure>
+          </article>
 
-          <figure class="paper-figure">
-            <img
-              src="./assets/figures/detection_kde.png"
-              alt="Detection score distributions"
-            >
-            <figcaption>
-              <strong>Feature detection.</strong> Detection score distributions
-              for Raw SAE, Random SAE, and the mechanistic explainer.
-            </figcaption>
-          </figure>
+          <article class="result-card">
+            <div class="result-text">
+              <p class="result-kicker">Explanation Efficiency</p>
+              <h3>Feed-forward explanations scale beyond explicit CoT reasoning.</h3>
+              <p>
+                On the Biology subset of BRIGHT, explicit CoT reasoning incurs
+                growing computational overhead as the candidate set expands.
+                Xetrieval instead uses a lightweight feed-forward pass over
+                sentence embeddings, keeping explanation time low while
+                consistently outperforming the base dense retriever and remaining
+                competitive with CoT-enhanced retrieval.
+              </p>
+            </div>
+            <figure class="paper-figure">
+              <img
+                src="./assets/figures/efficiency_combined.png"
+                alt="Explanation efficiency and retrieval performance"
+              >
+              <figcaption>
+                Explanation time and retrieval performance trends on BRIGHT
+                Biology.
+              </figcaption>
+            </figure>
+          </article>
 
-          <figure class="paper-figure">
-            <img
-              src="./assets/figures/efficiency_combined.png"
-              alt="Explanation efficiency and retrieval performance"
-            >
-            <figcaption>
-              <strong>Efficiency.</strong> Explanation time and retrieval
-              performance trends on the Biology subset of BRIGHT.
-            </figcaption>
-          </figure>
+          <article class="result-card reverse">
+            <div class="result-text">
+              <p class="result-kicker">Local Attribution</p>
+              <h3>Selected feature spans are tied to query-document similarity.</h3>
+              <p>
+                For each query-document pair, Xetrieval returns shared active
+                features as the explanation span. Erasing these spans produces
+                the largest decrease in the original similarity score, while
+                retaining them preserves or increases similarity more effectively
+                than direct decomposition. Non-overlap active features often
+                behave like distracting document information.
+              </p>
+            </div>
+            <figure class="paper-figure">
+              <img
+                src="./assets/figures/pair_steering_overview.png"
+                alt="Pair-level document-side intervention results"
+              >
+              <figcaption>
+                Pair-level document-side interventions by erasing or retaining
+                selected feature spans.
+              </figcaption>
+            </figure>
+          </article>
 
-          <figure class="paper-figure">
-            <img
-              src="./assets/figures/pair_steering_overview.png"
-              alt="Pair-level document-side intervention results"
-            >
-            <figcaption>
-              <strong>Pair-level intervention.</strong> Cosine-similarity changes
-              after erasing or retaining selected feature spans.
-            </figcaption>
-          </figure>
-
-          <figure class="paper-figure wide">
-            <img
-              src="./assets/figures/steering_comparison_stacked.png"
-              alt="Retrieval results after feature steering"
-            >
-            <figcaption>
-              <strong>Feature steering.</strong> Retrieval results when steering
-              key and non-key features identified by basic SAE and Xetrieval.
-            </figcaption>
-          </figure>
+          <article class="result-card wide">
+            <div class="result-text">
+              <p class="result-kicker">Task-level Feature Steering</p>
+              <h3>High-utility features can steer ranking behavior.</h3>
+              <p>
+                Xetrieval scores features by contrastive co-activation on
+                relevant and irrelevant query-document pairs. Amplifying the
+                resulting key features improves retrieval performance, while
+                suppressing them causes clear degradation. Compared with direct
+                decomposition on raw embeddings, Xetrieval identifies features
+                with stronger and more consistent steering effects, showing that
+                dense retrieval behavior can be concentrated into sparse,
+                verifiable mechanisms.
+              </p>
+            </div>
+            <figure class="paper-figure">
+              <img
+                src="./assets/figures/steering_comparison_stacked.png"
+                alt="Retrieval results after feature steering"
+              >
+              <figcaption>
+                Retrieval results when steering key and non-key features
+                identified by basic SAE and Xetrieval.
+              </figcaption>
+            </figure>
+          </article>
         </div>
       </section>
 
@@ -203,25 +289,6 @@ python explain_retrieval.py \
   --mechanistic_explainer_checkpoint checkpoints/sae_model.pt \
   --device cuda \
   --batch_size 64</code></pre>
-      </section>
-
-      <section class="section resources" id="paper">
-        <p class="section-label">Resources</p>
-        <h2>Links</h2>
-        <div class="resource-list">
-          <a class="resource" href="https://github.com/Hihiczx/Xetrieval">
-            <span>Code</span>
-            <strong>github.com/Hihiczx/Xetrieval</strong>
-          </a>
-          <a class="resource" href="#paper">
-            <span>Paper</span>
-            <strong>Public link coming soon</strong>
-          </a>
-          <a class="resource" href="https://huggingface.co/intfloat/e5-large-v2">
-            <span>Backbone</span>
-            <strong>intfloat/e5-large-v2</strong>
-          </a>
-        </div>
       </section>
 
       <section class="section two-column" id="citation">
