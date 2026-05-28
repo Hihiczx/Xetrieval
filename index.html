@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Xetrieval mechanistically explains dense retrieval decisions by decomposing query and document embeddings into sparse, interpretable features."
+    >
+    <title>Xetrieval: Mechanistically Explaining Dense Retrieval</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav" aria-label="Primary">
+        <a class="brand" href="./">Xetrieval</a>
+        <div class="nav-links">
+          <a href="#method">Method</a>
+          <a href="#usage">Usage</a>
+          <a href="#resources">Resources</a>
+          <a href="#citation">Citation</a>
+        </div>
+      </nav>
+
+      <section class="hero-content">
+        <p class="eyebrow">Embedding-level mechanistic interpretability for dense retrieval</p>
+        <h1>Xetrieval: Mechanistically Explaining Dense Retrieval</h1>
+        <p class="lead">
+          Xetrieval explains why dense retrievers assign high relevance scores by
+          identifying sparse, human-interpretable features shared by a query and
+          its retrieved documents.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/Hihiczx/Xetrieval">View Code</a>
+          <a class="button secondary" href="#usage">Get Started</a>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="section grid two-columns">
+        <div>
+          <p class="eyebrow">Motivation</p>
+          <h2>Opening the black box of dense retrieval</h2>
+          <p>
+            Dense retrievers compute relevance through high-dimensional query and
+            document embeddings, which makes individual retrieval decisions hard
+            to diagnose. Existing explanations often rely on lexical matches,
+            token alignments, or post-hoc textual rationales, leaving the latent
+            embedding factors underexplored.
+          </p>
+        </div>
+        <div class="card">
+          <h3>What Xetrieval returns</h3>
+          <p>
+            For each query-document pair, Xetrieval returns the shared active
+            features <code>O(q,d)</code> that connect both sides in a sparse
+            mechanistic feature space.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="method">
+        <p class="eyebrow">Method Overview</p>
+        <h2>Reasoning-aware sparse feature explanations</h2>
+        <div class="pipeline" aria-label="Xetrieval method pipeline">
+          <div class="step">
+            <span>1</span>
+            <h3>Encode</h3>
+            <p>Encode the query and document with an e5-style embedding model.</p>
+          </div>
+          <div class="step">
+            <span>2</span>
+            <h3>Internalize</h3>
+            <p>Approximate Chain-of-Thought reasoning directly in embedding space.</p>
+          </div>
+          <div class="step">
+            <span>3</span>
+            <h3>Decompose</h3>
+            <p>Apply a TopK-SAE mechanistic explainer to produce sparse features.</p>
+          </div>
+          <div class="step">
+            <span>4</span>
+            <h3>Explain</h3>
+            <p>Aggregate shared active features across document-side views.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section grid three-columns">
+        <article class="card">
+          <h3>Embedding-level</h3>
+          <p>
+            Explains dense retrieval where relevance scores are actually computed:
+            in the embedding space.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Reasoning-aware</h3>
+          <p>
+            Uses lightweight reasoning internalizers for document-side views such
+            as <code>qa</code>, <code>summary</code>, and <code>purpose</code>.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Feature-level</h3>
+          <p>
+            Reports interpretable sparse features and optional natural-language
+            feature hypotheses for each retrieval decision.
+          </p>
+        </article>
+      </section>
+
+      <section class="section grid two-columns" id="usage">
+        <div>
+          <p class="eyebrow">Usage</p>
+          <h2>Run Xetrieval with released checkpoints</h2>
+          <p>
+            The open-source release includes inference code for feature-level
+            retrieval explanation, a TopK-SAE mechanistic explainer checkpoint,
+            and reasoning internalizer checkpoints for three document-side views.
+          </p>
+        </div>
+        <pre><code>git clone https://github.com/Hihiczx/Xetrieval.git
+cd Xetrieval
+pip install -r requirements.txt
+
+python explain_retrieval.py \
+  --input_jsonl examples/query_doc_pairs.jsonl \
+  --output_jsonl outputs/explanations.jsonl \
+  --embedding_model_name intfloat/e5-large-v2 \
+  --reasoning_internalizer_dir checkpoints/reasoning_internalizer \
+  --mechanistic_explainer_checkpoint checkpoints/sae_model.pt \
+  --device cuda \
+  --batch_size 64</code></pre>
+      </section>
+
+      <section class="section" id="resources">
+        <p class="eyebrow">Resources</p>
+        <h2>Project links</h2>
+        <div class="resource-list">
+          <a class="resource" href="https://github.com/Hihiczx/Xetrieval">
+            <strong>Code</strong>
+            <span>GitHub repository for the Xetrieval open-source release.</span>
+          </a>
+          <a class="resource" href="https://huggingface.co/intfloat/e5-large-v2">
+            <strong>Embedding Model</strong>
+            <span>Default sentence-transformers backbone: intfloat/e5-large-v2.</span>
+          </a>
+          <a class="resource" href="#citation">
+            <strong>Paper</strong>
+            <span>Paper link will be added after the public version is available.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="citation">
+        <p class="eyebrow">Citation</p>
+        <h2>Cite Xetrieval</h2>
+        <p>
+          Citation metadata will be updated when the paper is publicly available.
+        </p>
+        <pre><code>@misc{xetrieval,
+  title = {Xetrieval: Mechanistically Explaining Dense Retrieval},
+  author = {Cai, Zhixin and Bai, Jun and Liu, Yang and Li, Jiaqi and Zhang, Yichi and Li, Taichuan and Chen, Zhuofan and Jia, Zixia and Zheng, Zilong and Rong, Wenge},
+  year = {2026},
+  note = {Code available at https://github.com/Hihiczx/Xetrieval}
+}</code></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Xetrieval: Mechanistically Explaining Dense Retrieval</p>
+      <a href="https://github.com/Hihiczx/Xetrieval">github.com/Hihiczx/Xetrieval</a>
+    </footer>
+  </body>
+</html>
