@@ -103,25 +103,25 @@ p {
 
 h1 {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.8rem, 6vw, 5.6rem);
+  font-size: clamp(2.25rem, 4.8vw, 4.35rem);
   font-weight: 700;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
-  margin-bottom: 1.35rem;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+  margin-bottom: 1.15rem;
 }
 
 h2 {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2rem, 3.5vw, 3.1rem);
+  font-size: clamp(1.65rem, 2.7vw, 2.35rem);
   font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1.08;
+  letter-spacing: -0.03em;
+  line-height: 1.14;
   margin-bottom: 1rem;
 }
 
 h3 {
-  font-size: 1.04rem;
-  line-height: 1.25;
+  font-size: 1rem;
+  line-height: 1.32;
   margin-bottom: 0.55rem;
 }
 
