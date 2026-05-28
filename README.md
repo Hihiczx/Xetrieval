@@ -38,7 +38,7 @@ The returned `shared_features` field corresponds to `O(q,d)` in the paper.
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Hihiczx/Xetrieval.git
 cd xetrieval
 pip install -r requirements.txt
 ```
