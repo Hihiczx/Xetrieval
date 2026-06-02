@@ -122,3 +122,16 @@ Each output line is a JSON object:
 ```
 
 `shared_features` is the union of the four `per_view_shared_features` sets.
+
+## Citation
+
+If you find Xetrieval useful for your research, please cite:
+
+```bibtex
+@article{cai2026xetrieval,
+  title={Xetrieval: Mechanistically Explaining Dense Retrieval},
+  author={Cai, Zhixin and Bai, Jun and Liu, Yang and Li, Jiaqi and Zhang, Yichi and Li, Taichuan and Chen, Zhuofan and Jia, Zixia and Zheng, Zilong and Rong, Wenge},
+  journal={arXiv preprint arXiv:2605.29507},
+  year={2026}
+}
+```
