@@ -12,19 +12,19 @@ from typing import Any, Iterable
 import torch
 
 from embedding_encoder import EmbeddingEncoder
-from mechanistic_explainer import (
+from sparse_autoencoder import (
     active_support,
     encode_sparse_codes_in_batches,
-    load_mechanistic_explainer,
+    load_sparse_autoencoder,
 )
-from reasoning_internalizer import (
-    REASONING_ASPECTS,
+from feature_elicitor import (
+    DOCUMENT_PERSPECTIVES,
     build_document_view_embeddings,
-    load_reasoning_internalizers,
+    load_feature_elicitors,
 )
 
 
-DOCUMENT_VIEW_NAMES = ("original", *REASONING_ASPECTS)
+DOCUMENT_VIEW_NAMES = ("original", *DOCUMENT_PERSPECTIVES)
 
 
 def resolve_device(device_name: str) -> torch.device:
@@ -52,31 +52,31 @@ def read_query_doc_pairs(input_jsonl: str | Path) -> list[dict[str, Any]]:
     return records
 
 
-def load_feature_hypotheses(path: str | Path | None) -> list[str] | None:
+def load_feature_descriptions(path: str | Path | None) -> list[str] | None:
     if path is None or str(path).strip().lower() in {"", "none", "null"}:
         return None
     with Path(path).open("r", encoding="utf-8") as f:
         return [line.rstrip("\n") for line in f]
 
 
-def feature_explanations(
+def build_feature_descriptions(
     shared_features: Iterable[int],
-    feature_hypotheses: list[str],
+    feature_descriptions: list[str],
 ) -> list[dict[str, Any]]:
-    explanations: list[dict[str, Any]] = []
+    descriptions: list[dict[str, Any]] = []
     for feature_id in shared_features:
-        hypothesis = (
-            feature_hypotheses[feature_id]
-            if feature_id < len(feature_hypotheses)
+        description = (
+            feature_descriptions[feature_id]
+            if feature_id < len(feature_descriptions)
             else ""
         )
-        explanations.append(
+        descriptions.append(
             {
                 "feature_id": int(feature_id),
-                "hypothesis": hypothesis,
+                "description": description,
             }
         )
-    return explanations
+    return descriptions
 
 
 def compute_document_view_supports(
@@ -84,14 +84,14 @@ def compute_document_view_supports(
     *,
     batch_size: int,
     device: torch.device,
-    mechanistic_explainer,
+    sparse_autoencoder,
     activation_threshold: float,
 ) -> dict[str, list[set[int]]]:
     view_supports: dict[str, list[set[int]]] = {}
     for view_name in DOCUMENT_VIEW_NAMES:
         sparse_codes = encode_sparse_codes_in_batches(
             document_views[view_name],
-            mechanistic_explainer,
+            sparse_autoencoder,
             batch_size=batch_size,
             device=device,
         )
@@ -107,7 +107,7 @@ def build_explanation_records(
     *,
     query_supports: list[set[int]],
     document_view_supports: dict[str, list[set[int]]],
-    feature_hypotheses: list[str] | None,
+    feature_descriptions: list[str] | None,
 ) -> list[dict[str, Any]]:
     outputs: list[dict[str, Any]] = []
 
@@ -128,10 +128,10 @@ def build_explanation_records(
             "shared_features": shared_features,
             "per_view_shared_features": per_view_shared_features,
         }
-        if feature_hypotheses is not None:
-            output_record["feature_explanations"] = feature_explanations(
+        if feature_descriptions is not None:
+            output_record["feature_descriptions"] = build_feature_descriptions(
                 shared_features,
-                feature_hypotheses,
+                feature_descriptions,
             )
         outputs.append(output_record)
 
@@ -158,19 +158,19 @@ def parse_args() -> argparse.Namespace:
         help="SentenceTransformer embedding model name or local path.",
     )
     parser.add_argument(
-        "--reasoning_internalizer_dir",
+        "--feature_elicitor_dir",
         required=True,
         help="Directory containing model_qa.pt, model_summary.pt, and model_purpose.pt.",
     )
     parser.add_argument(
-        "--mechanistic_explainer_checkpoint",
+        "--sae_checkpoint",
         required=True,
-        help="TopK-SAE mechanistic explainer checkpoint.",
+        help="shared TopK sparse autoencoder checkpoint.",
     )
     parser.add_argument(
-        "--feature_hypotheses_path",
+        "--feature_descriptions_path",
         default=None,
-        help="Optional txt file where line i is the hypothesis for feature i.",
+        help="Optional txt file where line i is the description for feature i.",
     )
     parser.add_argument("--device", default="cuda", help="Torch device, e.g. cuda or cpu.")
     parser.add_argument("--batch_size", type=int, default=64)
@@ -188,7 +188,7 @@ def main() -> None:
     device = resolve_device(args.device)
 
     records = read_query_doc_pairs(args.input_jsonl)
-    feature_hypotheses = load_feature_hypotheses(args.feature_hypotheses_path)
+    feature_descriptions = load_feature_descriptions(args.feature_descriptions_path)
     queries = [str(record["query"]) for record in records]
     docs = [str(record["doc"]) for record in records]
 
@@ -202,41 +202,41 @@ def main() -> None:
     query_embeddings = embedding_encoder.encode_queries(queries)
     doc_embeddings = embedding_encoder.encode_documents(docs)
 
-    print("Loading reasoning internalizers.")
-    reasoning_internalizers = load_reasoning_internalizers(
-        args.reasoning_internalizer_dir,
+    print("Loading Feature Elicitors.")
+    feature_elicitors = load_feature_elicitors(
+        args.feature_elicitor_dir,
         device=device,
     )
     print("Building document-side views.")
     document_views = build_document_view_embeddings(
         doc_embeddings,
-        reasoning_internalizers,
+        feature_elicitors,
         batch_size=args.batch_size,
         device=device,
     )
 
-    print("Loading mechanistic explainer.")
-    mechanistic_explainer = load_mechanistic_explainer(
-        args.mechanistic_explainer_checkpoint,
+    print("Loading shared sparse autoencoder.")
+    sparse_autoencoder = load_sparse_autoencoder(
+        args.sae_checkpoint,
         device=device,
     )
-    if query_embeddings.shape[1] != mechanistic_explainer.activation_dim:
+    if query_embeddings.shape[1] != sparse_autoencoder.activation_dim:
         raise ValueError(
             "Embedding dimension mismatch: "
             f"encoder produced {query_embeddings.shape[1]}, "
-            f"but mechanistic explainer expects {mechanistic_explainer.activation_dim}."
+            f"but shared sparse autoencoder expects {sparse_autoencoder.activation_dim}."
         )
 
-    if feature_hypotheses is not None and len(feature_hypotheses) < mechanistic_explainer.dict_size:
+    if feature_descriptions is not None and len(feature_descriptions) < sparse_autoencoder.dict_size:
         print(
-            "Warning: feature hypothesis file has fewer lines than the SAE dictionary size.",
+            "Warning: feature description file has fewer lines than the SAE dictionary size.",
             file=sys.stderr,
         )
 
     print("Encoding query sparse codes.")
     query_sparse_codes = encode_sparse_codes_in_batches(
         query_embeddings,
-        mechanistic_explainer,
+        sparse_autoencoder,
         batch_size=args.batch_size,
         device=device,
     )
@@ -250,7 +250,7 @@ def main() -> None:
         document_views,
         batch_size=args.batch_size,
         device=device,
-        mechanistic_explainer=mechanistic_explainer,
+        sparse_autoencoder=sparse_autoencoder,
         activation_threshold=args.activation_threshold,
     )
 
@@ -258,10 +258,10 @@ def main() -> None:
         records,
         query_supports=query_supports,
         document_view_supports=document_view_supports,
-        feature_hypotheses=feature_hypotheses,
+        feature_descriptions=feature_descriptions,
     )
     write_jsonl(output_records, args.output_jsonl)
-    print(f"Wrote explanations to {args.output_jsonl}")
+    print(f"Wrote descriptions to {args.output_jsonl}")
 
 
 if __name__ == "__main__":

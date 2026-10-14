@@ -1,4 +1,4 @@
-"""Reasoning internalizer modules for Xetrieval document-side views."""
+"""Feature Elicitor modules for Xetrieval document-side views."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-REASONING_ASPECTS = ("qa", "summary", "purpose")
+DOCUMENT_PERSPECTIVES = ("qa", "summary", "purpose")
 
 
-class ReasoningInternalizer(nn.Module):
-    """One-hidden-layer MLP R_t(z) that maps a document embedding to a view."""
+class FeatureElicitor(nn.Module):
+    """One-hidden-layer MLP P_t(z) that maps a document embedding to a view."""
 
     def __init__(self, input_dim: int, hidden_dim: int) -> None:
         super().__init__()
@@ -35,7 +35,7 @@ def _extract_state_dict(checkpoint) -> dict[str, torch.Tensor]:
                 checkpoint = checkpoint[key]
                 break
     if not isinstance(checkpoint, dict):
-        raise TypeError("Reasoning internalizer checkpoint must contain a state dict.")
+        raise TypeError("Feature Elicitor checkpoint must contain a state dict.")
 
     state = {}
     for key, value in checkpoint.items():
@@ -44,60 +44,60 @@ def _extract_state_dict(checkpoint) -> dict[str, torch.Tensor]:
     return state
 
 
-def load_reasoning_internalizer(
+def load_feature_elicitor(
     checkpoint_path: str | Path,
     *,
     device: torch.device,
-) -> ReasoningInternalizer:
-    """Load one aspect-specific reasoning internalizer."""
+) -> FeatureElicitor:
+    """Load one aspect-specific Feature Elicitor."""
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     state = _extract_state_dict(checkpoint)
     if "net.0.weight" not in state:
-        raise KeyError("Missing `net.0.weight` in reasoning internalizer checkpoint.")
+        raise KeyError("Missing `net.0.weight` in Feature Elicitor checkpoint.")
 
     hidden_dim, input_dim = state["net.0.weight"].shape
-    internalizer = ReasoningInternalizer(input_dim=input_dim, hidden_dim=hidden_dim)
-    internalizer.load_state_dict(state)
-    internalizer.to(device)
-    internalizer.eval()
-    return internalizer
+    elicitor = FeatureElicitor(input_dim=input_dim, hidden_dim=hidden_dim)
+    elicitor.load_state_dict(state)
+    elicitor.to(device)
+    elicitor.eval()
+    return elicitor
 
 
-def load_reasoning_internalizers(
+def load_feature_elicitors(
     model_dir: str | Path,
     *,
     device: torch.device,
-) -> Dict[str, ReasoningInternalizer]:
-    """Load QA, Summary, and Purpose reasoning internalizers from a directory."""
+) -> Dict[str, FeatureElicitor]:
+    """Load QA, Summary, and Purpose Feature Elicitors from a directory."""
     model_dir = Path(model_dir)
-    internalizers: Dict[str, ReasoningInternalizer] = {}
-    for aspect in REASONING_ASPECTS:
+    elicitors: Dict[str, FeatureElicitor] = {}
+    for aspect in DOCUMENT_PERSPECTIVES:
         checkpoint_path = model_dir / f"model_{aspect}.pt"
         if not checkpoint_path.is_file():
-            raise FileNotFoundError(f"Missing reasoning internalizer: {checkpoint_path}")
-        internalizers[aspect] = load_reasoning_internalizer(
+            raise FileNotFoundError(f"Missing Feature Elicitor: {checkpoint_path}")
+        elicitors[aspect] = load_feature_elicitor(
             checkpoint_path,
             device=device,
         )
-    return internalizers
+    return elicitors
 
 
 @torch.no_grad()
 def build_document_view_embeddings(
     doc_embeddings: torch.Tensor,
-    internalizers: Dict[str, ReasoningInternalizer],
+    elicitors: Dict[str, FeatureElicitor],
     *,
     batch_size: int,
     device: torch.device,
 ) -> dict[str, torch.Tensor]:
-    """Build V(d) = {z_d, R_qa(z_d), R_summary(z_d), R_purpose(z_d)}."""
+    """Build V(d) = {z_d, P_qa(z_d), P_summary(z_d), P_purpose(z_d)}."""
     document_views = {"original": doc_embeddings.cpu()}
 
-    for aspect in REASONING_ASPECTS:
-        if aspect not in internalizers:
-            raise KeyError(f"Missing `{aspect}` reasoning internalizer.")
+    for aspect in DOCUMENT_PERSPECTIVES:
+        if aspect not in elicitors:
+            raise KeyError(f"Missing `{aspect}` Feature Elicitor.")
         chunks: list[torch.Tensor] = []
-        model = internalizers[aspect]
+        model = elicitors[aspect]
         for start in range(0, doc_embeddings.shape[0], batch_size):
             end = min(start + batch_size, doc_embeddings.shape[0])
             batch = doc_embeddings[start:end].to(device)

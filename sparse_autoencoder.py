@@ -1,4 +1,4 @@
-"""TopK-SAE mechanistic explainer used by Xetrieval."""
+"""shared TopK sparse autoencoder used by Xetrieval."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class TopKMechanisticExplainer(nn.Module):
+class TopKSparseAutoencoder(nn.Module):
     """TopK sparse autoencoder for decomposing embeddings into sparse codes."""
 
     def __init__(self, activation_dim: int, dict_size: int, k: int) -> None:
@@ -75,7 +75,7 @@ def active_support(
 @torch.no_grad()
 def encode_sparse_codes_in_batches(
     embeddings: torch.Tensor,
-    explainer: TopKMechanisticExplainer,
+    sae: TopKSparseAutoencoder,
     *,
     batch_size: int,
     device: torch.device,
@@ -85,7 +85,7 @@ def encode_sparse_codes_in_batches(
     for start in range(0, embeddings.shape[0], batch_size):
         end = min(start + batch_size, embeddings.shape[0])
         batch = embeddings[start:end].to(device)
-        sparse_code = explainer.encode_sparse_code(batch)
+        sparse_code = sae.encode_sparse_code(batch)
         chunks.append(sparse_code.detach().cpu())
     if not chunks:
         raise ValueError("Cannot encode an empty embedding matrix.")
@@ -99,7 +99,7 @@ def _extract_state_dict(checkpoint) -> dict[str, torch.Tensor]:
                 checkpoint = checkpoint[key]
                 break
     if not isinstance(checkpoint, dict):
-        raise TypeError("Mechanistic explainer checkpoint must contain a state dict.")
+        raise TypeError("Shared sparse autoencoder checkpoint must contain a state dict.")
 
     state = {}
     for key, value in checkpoint.items():
@@ -118,24 +118,24 @@ def _read_topk_value(state: dict[str, torch.Tensor], default: int = 64) -> int:
         return int(value)
 
 
-def load_mechanistic_explainer(
+def load_sparse_autoencoder(
     checkpoint_path: str | Path,
     *,
     device: torch.device,
-) -> TopKMechanisticExplainer:
-    """Load the TopK-SAE mechanistic explainer from a checkpoint."""
+) -> TopKSparseAutoencoder:
+    """Load the shared TopK sparse autoencoder from a checkpoint."""
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     state = _extract_state_dict(checkpoint)
     if "encoder.weight" not in state:
-        raise KeyError("Missing `encoder.weight` in mechanistic explainer checkpoint.")
+        raise KeyError("Missing `encoder.weight` in shared sparse autoencoder checkpoint.")
 
     dict_size, activation_dim = state["encoder.weight"].shape
-    explainer = TopKMechanisticExplainer(
+    sae = TopKSparseAutoencoder(
         activation_dim=activation_dim,
         dict_size=dict_size,
         k=_read_topk_value(state),
     )
-    explainer.load_state_dict(state)
-    explainer.to(device)
-    explainer.eval()
-    return explainer
+    sae.load_state_dict(state)
+    sae.to(device)
+    sae.eval()
+    return sae
